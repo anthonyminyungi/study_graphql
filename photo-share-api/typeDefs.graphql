@@ -1,4 +1,5 @@
 scalar DateTime
+
 enum PhotoCategory {
   SELFIE
   PORTRAIT
@@ -30,6 +31,7 @@ input PostPhotoInput {
   name: String!
   category: PhotoCategory = PORTRAIT
   description: String
+  file: Upload!
 }
 
 type Query {
@@ -45,6 +47,10 @@ type Mutation {
   postPhoto(input: PostPhotoInput!): Photo!
   githubAuth(code: String!): AuthPayload!
   fakeUserAuth(githubLogin: ID!): AuthPayload!
+}
+
+type Subscription {
+  newPhoto: Photo!
 }
 
 type AuthPayload {

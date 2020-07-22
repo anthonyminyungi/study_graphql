@@ -1,5 +1,6 @@
-const { authorizeWithGithub } = require('../lib');
+const { authorizeWithGithub, uploadStream } = require('../lib');
 const fetch = require('node-fetch');
+const path = require('path');
 
 module.exports = {
   async addFakeUsers(root, { count }, { db }) {
@@ -31,9 +32,9 @@ module.exports = {
     };
   },
 
-  async postPhoto(parent, args, { db, currentUser }) {
+  async postPhoto(root, args, { db, currentUser, pubsub }) {
     if (!currentUser) {
-      throw new Error('Only an authorized user can post a photo');
+      throw new Error('only an authorized user can post a photo');
     }
 
     const newPhoto = {
@@ -42,11 +43,25 @@ module.exports = {
       created: new Date(),
     };
 
-    const { insertedIds } = await db.collection('photos').insertOne(newPhoto);
+    const { insertedIds } = await db.collection('photos').insert(newPhoto);
     newPhoto.id = insertedIds[0];
+
+    const toPath = path.join(
+      __dirname,
+      '..',
+      'assets',
+      'photos',
+      `${photo.id}.jpg`
+    );
+
+    const { stream } = await args.input.file;
+    await uploadStream(input.file, toPath);
+
+    pubsub.publish('photo-added', { newPhoto });
 
     return newPhoto;
   },
+
   async githubAuth(parent, { code }, { db }) {
     let {
       message,
